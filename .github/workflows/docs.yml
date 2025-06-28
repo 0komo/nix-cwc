@@ -4,6 +4,7 @@ on:
     paths:
       - modules/**
       - docs/**
+      - .github/workflows/docs.yml
   workflow_dispatch:
 
 permissions:
@@ -29,24 +30,18 @@ jobs:
           cp ./result/* ./docs
           rm -f result
 
-      - name: Pre-push setup
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
       - name: Check for changes
         id: status
         run: |
           changes="$(git status --porcelain)"
           echo "changes=${#changes}" >> $GITHUB_OUTPUT
-          if [[ -n "$changes" ]]; then
-            git add docs
-            git commit -m "docs: automatic rebuild"
-          fi
 
       - name: Push changes
         if: ${{ steps.status.outputs.changes != '0' }}
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs
+          git commit -m "docs: automatic rebuild"
+          git push
+          
