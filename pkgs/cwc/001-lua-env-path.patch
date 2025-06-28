@@ -1,0 +1,33 @@
+diff --git a/src/luac.c b/src/luac.c
+index 591c02e..9366804 100644
+--- a/src/luac.c
++++ b/src/luac.c
+@@ -498,6 +498,28 @@ int luaC_init()
+     luaL_openlibs(L);
+     add_to_search_path(L, library_path ? library_path : CWC_DATADIR "/lib");
+ 
++    lua_getglobal(L, "package");
++
++    // package.cpath += ";@LUA_ENV@/lib/lua/5.1/?.so"
++    lua_getfield(L, -1, "cpath");
++    lua_pushstring(L, ";@LUA_ENV@/lib/lua/5.1/?.so");
++    lua_concat(L, 2);
++    lua_setfield(L, -2, "cpath");
++
++    // package.path += ";@LUA_ENV@/share/lua/5.1/?.lua"
++    lua_getfield(L, -1, "path");
++    lua_pushstring(L, ";@LUA_ENV@/share/lua/5.1/?.lua");
++    lua_concat(L, 2);
++    lua_setfield(L, -2, "path");
++
++    // package.path += ";@LUA_ENV@/share/lua/5.1/?/init.lua"
++    lua_getfield(L, -1, "path");
++    lua_pushstring(L, ";@LUA_ENV@/share/lua/5.1/?/init.lua");
++    lua_concat(L, 2);
++    lua_setfield(L, -2, "path");
++
++    lua_pop(L, 1);
++
+     // awesome compability for awesome module
+     cwc_assert(
+         !luaL_dostring(L, "awesome = { connect_signal = function() end}"),

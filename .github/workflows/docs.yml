@@ -1,0 +1,44 @@
+name: Build docs
+on:
+  push:
+    paths:
+      - modules/**
+      - docs/**
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build docs
+        run: |
+          nix build ./docs --override-input root path:"$PWD"
+          # --override-input is needed because docs/flake.lock may have outdated changes
+          
+          mv ./result/* ./docs
+          rm -f result
+
+      - name: Check for changes
+        id: status
+        run: |
+          : "$(git status --porcelain)"
+          echo "changes=${#_}" >> $GITHUB_OUTPUT
+
+      - name: Pre-push setup
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Push changes
+        if: ${{ steps.status.outputs.changes != '0' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
