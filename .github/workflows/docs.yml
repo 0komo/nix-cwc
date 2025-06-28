@@ -40,6 +40,7 @@ jobs:
           changes="$(git status --porcelain)"
           echo "changes=${#changes}" >> $GITHUB_OUTPUT
           if [[ -n "$changes" ]]; then
+            git add docs
             git commit -m "docs: automatic rebuild"
           fi
 
