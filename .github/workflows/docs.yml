@@ -5,8 +5,11 @@ on:
       - modules/**
       - docs/**
 
+permissions:
+  contents: read
+
 jobs:
-  generate:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -28,8 +31,11 @@ jobs:
       - name: Check for changes
         id: status
         run: |
-          : "$(git status --porcelain)"
-          echo "changes=${#_}" >> $GITHUB_OUTPUT
+          changes="$(git status --porcelain)"
+          echo "changes=${#changes}" >> $GITHUB_OUTPUT
+          if [[ -n "$changes" ]]; then
+            git commit -m "docs: automatic rebuild"
+          fi
 
       - name: Pre-push setup
         run: |
