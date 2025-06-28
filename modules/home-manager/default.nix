@@ -44,6 +44,7 @@ in
     systemd = {
       enable = lib.mkEnableOption null // {
         default = true;
+        example = false;
         description = ''
           Whether to enable `cwc-session.target` on
           CwC setup. This links to `graphical-session.target`.
