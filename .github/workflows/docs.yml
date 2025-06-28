@@ -29,6 +29,11 @@ jobs:
           cp ./result/* ./docs
           rm -f result
 
+      - name: Pre-push setup
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
       - name: Check for changes
         id: status
         run: |
@@ -37,11 +42,6 @@ jobs:
           if [[ -n "$changes" ]]; then
             git commit -m "docs: automatic rebuild"
           fi
-
-      - name: Pre-push setup
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
 
       - name: Push changes
         if: ${{ steps.status.outputs.changes != '0' }}
