@@ -113,5 +113,5 @@ stdenv.mkDerivation (self: {
     )
   '';
 
-  main.mainProgram = "cwc";
+  meta.mainProgram = "cwc";
 })
