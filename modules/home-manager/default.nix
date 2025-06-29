@@ -105,7 +105,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertations = [
+    assertions = [
       (lib.hm.assertions.assertPlatform "wayland.windowManager.cwc" pkgs lib.platforms.linux)
     ];
 
