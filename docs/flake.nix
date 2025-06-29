@@ -40,9 +40,6 @@
               { config._module.check = false; }
               mod
             ];
-            specialArgs = {
-              inherit pkgs;
-            };
           }).options) [ "_module" ];
 
         options = {

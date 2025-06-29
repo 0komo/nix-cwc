@@ -1,5 +1,6 @@
 {
   mkPackageSet,
+  nixpkgsPath,
   ...
 }:
 {
@@ -8,7 +9,6 @@
   pkgs,
   ...
 }:
-
 let
   cfg = config.programs.cwc;
 in
@@ -21,7 +21,7 @@ in
         Which package to install the CwC compositor.
       '';
     };
-    
+
     withUWSM = lib.mkEnableOption null // {
       description = ''
         Launch CwC with UWSM (Universal Wayland Session Manager) session manager.
@@ -37,31 +37,24 @@ in
   };
 
   config = lib.mkIf cfg.enable (
-    lib.mkMerge [
-      {
-        environment.systemPackages = [ cfg.package ];
+    {
+      environment.systemPackages = [ cfg.package ];
 
-        xdg.portal.enable = true;
-        xdg.portal.configPackages = lib.mkDefault [ cfg.package ];
-      }
+      xdg.portal.enable = true;
+      xdg.portal.configPackages = lib.mkDefault [ cfg.package ];
 
-      (lib.mkIf cfg.withUWSM {
-        programs.uwsm.enable = true;
-        programs.uwsm.waylandCompositors = {
-          cwc = {
-            prettyName = "CwC";
-            comment = "CwC compositor managed by UWSM";
-            binPath = "/run/current-system/sw/bin/cwc";
-          };
+      programs.uwsm.enable = cfg.withUWSM;
+      programs.uwsm.waylandCompositors = lib.optionalAttrs cfg.withUWSM {
+        cwc = {
+          prettyName = "CwC";
+          comment = "CwC compositor managed by UWSM";
+          binPath = "/run/current-system/sw/bin/cwc";
         };
-      })
-      (lib.mkIf (!cfg.withUWSM) {
-        services.displayManager.sessionPackages = [ cfg.package ];
-      })
-
-      (import (pkgs.path + /nixos/modules/programs/wayland/wayland-session.nix) {
-        inherit lib pkgs;
-      })
-    ]
+      };
+      services.displayManager.sessionPackages = lib.optionals (!cfg.withUWSM) [ cfg.package ];
+    }
+    // (import (nixpkgsPath + "/nixos/modules/programs/wayland/wayland-session.nix") {
+      inherit lib pkgs;
+    })
   );
 }
