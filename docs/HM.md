@@ -156,7 +156,7 @@ boolean
 
 
 
-Extra commands to be run after D-Bus activition\.
+Extra commands to be run after D-Bus activation\.
 
 
 
