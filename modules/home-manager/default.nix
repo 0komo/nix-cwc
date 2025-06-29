@@ -179,9 +179,7 @@ in
             [[ -z "$socks_location" ]] && return
 
             for f in "$socks_location"/cwc*.sock; do
-              ${cfg.package}/bin/cwctl -s "$f" -c "cwc.commit()" ||
-                exit_code="$?"
-              (( exit_code == 255 )) && return -1
+              ${cfg.package}/bin/cwctl -s "$f" -c "cwc.commit()" >/dev/null 2>&1
             done
           }
 
