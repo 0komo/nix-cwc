@@ -78,7 +78,7 @@ in
           "stop"
           "start"
         ];
-        description = "Extra commands to be run after D-Bus activition.";
+        description = "Extra commands to be run after D-Bus activation.";
       };
 
       enableXdgAutostart = lib.mkEnableOption "autostart of application using {manpage}`systemd-xdg-autostart-generator(8)`";
@@ -126,7 +126,7 @@ in
         extraCommands = builtins.concatStringsSep " " (map (s: "&& ${s}") cfg.systemd.extraCommands);
         systemdActivation = ''
           cwc.spawn_with_shell [[
-            ${pkgs.dbus}/bin/dbus-update-activition-environment --systemd ${variables} ${extraCommands}
+            ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd ${variables} ${extraCommands}
           ]]
         '';
 
