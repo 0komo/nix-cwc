@@ -125,7 +125,7 @@ in
         variables = builtins.concatStringsSep " " cfg.systemd.variables;
         extraCommands = builtins.concatStringsSep " " (map (s: "&& ${s}") cfg.systemd.extraCommands);
         systemdActivation = ''
-          cwc.spawn_program_with_shell [[
+          cwc.spawn_with_shell [[
             ${pkgs.dbus}/bin/dbus-update-activition-environment --systemd ${variables} ${extraCommands}
           ]]
         '';
