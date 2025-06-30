@@ -37,7 +37,7 @@ let
   );
 in
 stdenv.mkDerivation (self: {
-  name = "cwc";
+  pname = "cwc";
   version = "0.1.0";
 
   src = fetchFromGitHub {
