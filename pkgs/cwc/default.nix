@@ -44,7 +44,7 @@ stdenv.mkDerivation (self: {
     owner = "Cudiph";
     repo = "cwcwm";
     rev = "v${self.version}";
-    hash = "sha256-LOKBwDteNhW5VHu0ZqqA/enTQ5x5siKE8KA+7buuhaw=";
+    hash = "sha256-qkhlxk2t1cBs3VO6VwJicuhxUa12w+FTvVoCSLpWX1Q=";
     leaveDotGit = true;
   };
 
