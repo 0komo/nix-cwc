@@ -37,24 +37,32 @@ in
   };
 
   config = lib.mkIf cfg.enable (
-    {
-      environment.systemPackages = [ cfg.package ];
+    lib.mkMerge [
+      {
+        environment.systemPackages = [ cfg.package ];
 
-      xdg.portal.enable = true;
-      xdg.portal.configPackages = lib.mkDefault [ cfg.package ];
+        xdg.portal.enable = true;
+        xdg.portal.configPackages = lib.mkDefault [ cfg.package ];
+      }
 
-      programs.uwsm.enable = cfg.withUWSM;
-      programs.uwsm.waylandCompositors = lib.optionalAttrs cfg.withUWSM {
-        cwc = {
-          prettyName = "CwC";
-          comment = "CwC compositor managed by UWSM";
-          binPath = "/run/current-system/sw/bin/cwc";
+      (lib.mkIf cfg.withUWSM {
+        programs.uwsm.enable = true;
+        programs.uwsm.waylandCompositors = {
+          cwc = {
+            prettyName = "CwC";
+            comment = "CwC compositor managed by UWSM";
+            binPath = "/run/current-system/sw/bin/cwc";
+          };
         };
-      };
-      services.displayManager.sessionPackages = lib.optionals (!cfg.withUWSM) [ cfg.package ];
-    }
-    // (import (nixpkgsPath + "/nixos/modules/programs/wayland/wayland-session.nix") {
-      inherit lib pkgs;
-    })
+      })
+
+      (lib.mkIf (!cfg.withUWSM) {
+        services.displayManager.sessionPackages = [ cfg.package ];
+      })
+
+      (import (nixpkgsPath + "/nixos/modules/programs/wayland/wayland-session.nix") {
+        inherit lib pkgs;
+      })
+    ]
   );
 }

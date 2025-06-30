@@ -50,8 +50,8 @@ in
           CwC setup. This links to `graphical-session.target`.
           Some important environment variables will be imported to systemd
           and D-Bus user environment before reaching target, including
-          - `DISPLAY`
           - `CWC_SOCK`
+          - `DISPLAY`
           - `WAYLAND_DISPLAY`
           - `XDG_CURRENT_DESKTOP`
         '';
@@ -60,8 +60,8 @@ in
       variables = lib.mkOption {
         type = with lib.types; listOf str;
         default = [
-          "DISPLAY"
           "CWC_SOCK"
+          "DISPLAY"
           "WAYLAND_DISPLAY"
           "XDG_CURRENT_DESKTOP"
         ];
@@ -104,68 +104,76 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      (lib.hm.assertions.assertPlatform "wayland.windowManager.cwc" pkgs lib.platforms.linux)
-    ];
-
-    home.packages = lib.mkIf (cfg.package != null) [
-      cfg.package
-      pkgs.xwayland
-    ];
-
-    xdg.configFile."cwc/rc.lua" =
-      let
-        onStartup = list: ''
-          if cwc.is_startup() then
-            ${lib.concatLines list}
-          end
-        '';
-
-        variables = builtins.concatStringsSep " " cfg.systemd.variables;
-        extraCommands = builtins.concatStringsSep " " (map (s: "&& ${s}") cfg.systemd.extraCommands);
-        systemdActivation = ''
-          cwc.spawn_with_shell [[
-            ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd ${variables} ${extraCommands}
-          ]]
-        '';
-
-        plugins = lib.concatLines (
-          map (
-            x:
-            let
-              entry = if lib.types.package.check x then "${x}/lib/lib${x.pname}" else x;
-            in
-            "cwc.plugin.load [[${entry}]]"
-          )
-        );
-
-        shouldGenerate = cfg.systemd.enable || cfg.extraConfig != "" || cfg.plugins != [ ];
-      in
-      lib.mkIf shouldGenerate ({
-        text = lib.concatLines [
-          (onStartup [
-            (lib.optionalString cfg.systemd.enable systemdActivation)
-            (lib.optionalString (cfg.plugins != [ ]) plugins)
-          ])
-
-          (lib.optionalString (cfg.extraConfig != "") (
-            if builtins.isPath cfg.extraConfig then
-              ''
-                do
-                  local procall = require("gears").protected_call
-                  local fn = procall(assert, loadfile [[${cfg.extraConfig}]])
-                  if fn then
-                    fn()
-                  end
-                end
-              ''
-            else
-              cfg.extraConfig
-          ))
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        assertions = [
+          (lib.hm.assertions.assertPlatform "wayland.windowManager.cwc" pkgs lib.platforms.linux)
         ];
 
-        onChange = lib.mkIf (cfg.package != null) ''
+        xdg.configFile."cwc/rc.lua" =
+          let
+            onStartup = list: ''
+              if cwc.is_startup() then
+                ${lib.concatLines list}
+              end
+            '';
+
+            variables = builtins.concatStringsSep " " cfg.systemd.variables;
+            extraCommands = builtins.concatStringsSep " " (map (s: "&& ${s}") cfg.systemd.extraCommands);
+            systemdActivation = ''
+              cwc.spawn_with_shell [[
+                ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd ${variables} ${extraCommands}
+              ]]
+            '';
+
+            plugins = lib.concatLines (
+              map (
+                x:
+                let
+                  entry = if lib.types.package.check x then "${x}/lib/lib${x.pname}" else x;
+                in
+                "cwc.plugin.load [[${entry}]]"
+              )
+            );
+
+            shouldGenerate = cfg.systemd.enable || cfg.extraConfig != "" || cfg.plugins != [ ];
+          in
+          lib.mkIf shouldGenerate ({
+            text = lib.concatLines [
+              (onStartup [
+                (lib.optionalString cfg.systemd.enable systemdActivation)
+                (lib.optionalString (cfg.plugins != [ ]) plugins)
+              ])
+
+              (lib.optionalString (cfg.extraConfig != "") (
+                if builtins.isPath cfg.extraConfig then
+                  ''
+                    do
+                      local procall = require("gears").protected_call
+                      local fn = procall(assert, loadfile [[${cfg.extraConfig}]])
+                      if fn then
+                        fn()
+                      end
+                    end
+                  ''
+                else
+                  cfg.extraConfig
+              ))
+            ];
+          });
+      }
+
+      (lib.mkIf (cfg.package != null) {
+        home.packages = [
+          cfg.package
+          pkgs.xwayland
+        ];
+
+        xdg.portal.enable = true;
+        xdg.portal.configPackages = lib.mkDefault [ cfg.package ];
+
+        xdg.configFile."cwc/rc.lua".onChange = ''
           _change() {
             local socks_location exit_code=0
 
@@ -185,22 +193,22 @@ in
 
           (_change)
         '';
-      });
+      })
 
-    xdg.portal.enable = cfg.package != null;
-    xdg.portal.configPackages = lib.mkIf (cfg.package != null) (lib.mkDefault [ cfg.package ]);
-
-    systemd.user.targets.cwc-session = lib.mkIf cfg.systemd.enable {
-      Unit = {
-        Description = "CwC compositor session";
-        Documentation = [ "man:systemd.special(7)" ];
-        BindsTo = [ "graphical-session.target" ];
-        Wants = [
-          "graphical-session-pre.target"
-        ] ++ lib.optional cfg.systemd.enableXdgAutostart "xdg-desktop-autostart.target";
-        After = [ "graphical-session-pre.target" ];
-        Before = lib.mkIf cfg.systemd.enableXdgAutostart [ "xdg-desktop-autostart.target" ];
-      };
-    };
-  };
+      (lib.mkIf cfg.systemd.enable {
+        systemd.user.targets.cwc-session = {
+          Unit = {
+            Description = "CwC compositor session";
+            Documentation = [ "man:systemd.special(7)" ];
+            BindsTo = [ "graphical-session.target" ];
+            Wants = [
+              "graphical-session-pre.target"
+            ] ++ lib.optional cfg.systemd.enableXdgAutostart "xdg-desktop-autostart.target";
+            After = [ "graphical-session-pre.target" ];
+            Before = lib.mkIf cfg.systemd.enableXdgAutostart [ "xdg-desktop-autostart.target" ];
+          };
+        };
+      })
+    ]
+  );
 }
