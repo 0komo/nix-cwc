@@ -107,8 +107,8 @@ CwC setup\. This links to ` graphical-session.target `\.
 Some important environment variables will be imported to systemd
 and D-Bus user environment before reaching target, including
 
- - ` DISPLAY `
  - ` CWC_SOCK `
+ - ` DISPLAY `
  - ` WAYLAND_DISPLAY `
  - ` XDG_CURRENT_DESKTOP `
 
@@ -194,8 +194,8 @@ list of string
 
 ```
 [
-  "DISPLAY"
   "CWC_SOCK"
+  "DISPLAY"
   "WAYLAND_DISPLAY"
   "XDG_CURRENT_DESKTOP"
 ]
