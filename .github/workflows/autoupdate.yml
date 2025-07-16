@@ -1,17 +1,14 @@
-name: Build docs
+name: Update commit.toml
 on:
-  push:
-    paths:
-      - modules/**
-      - docs/**
-      - .github/workflows/docs.yml
+  schedule:
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -22,13 +19,14 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build docs
+      - name: Generate commit.toml
+        shell: nix shell nixpkgs#nushell --command bash {0}
         run: |
-          nix build ./docs --override-input root path:"$PWD"
-          # --override-input is needed because docs/flake.lock may have outdated changes
-          
-          cp ./result/* ./docs
-          rm -f result
+          nu scripts/generate-toml.nu
+
+      - name: Test if buildable
+        run: |
+          nix build -L .#cwc
 
       - name: Check for changes
         id: status
@@ -41,6 +39,6 @@ jobs:
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add docs
-          git commit -m "docs: automatic rebuild"
+          git add commit.toml
+          git commit -m "bump: update to latest commit"
           git push
