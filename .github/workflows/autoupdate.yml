@@ -21,6 +21,8 @@ jobs:
 
       - name: Generate commit.toml
         shell: nix shell nixpkgs#nushell --command bash {0}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           nu scripts/generate-toml.nu
 
