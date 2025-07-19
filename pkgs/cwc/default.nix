@@ -3,7 +3,7 @@
   stdenv,
   fetchFromGitHub,
   # Options
-  withLuaEnv ? null,
+  luaEnv ? null,
   # Build-time dependencies
   git,
   gobject-introspection,
@@ -29,22 +29,24 @@
   xxHash,
   xorg,
   xwayland,
-}@attrs:
+}:
 
 let
-  _unused = [ withLuaEnv ];
-
   inherit (builtins)
     readFile
     fromTOML
     substring
     elemAt
     ;
-  luaEnv = attrs.withLuaEnv or luajit.withPackages (
-    p: with p; [
-      lgi
-    ]
-  );
+  luaEnv' =
+    if luaEnv == null then
+      luajit.withPackages (
+        p: with p; [
+          lgi
+        ]
+      )
+    else
+      luaEnv;
   latestCommit = elemAt (fromTOML (readFile ../../commit.toml)).commits 0;
 
   mkLuaPath =
@@ -114,7 +116,7 @@ stdenv.mkDerivation (self: {
   '';
 
   passthru = {
-    inherit luaEnv;
+    luaEnv = luaEnv';
   };
 
   meta.mainProgram = "cwc";
